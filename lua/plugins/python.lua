@@ -12,10 +12,15 @@ return {
               analysis = {
                 diagnosticMode = "workspace",
                 autoImportCompletions = true,
-                exclude = { ".venv/*", "venv/*" },
-                ---ignore = { "/home/lenow/.cache/pypoetry/virtualenvs/*", "/home/lenow/miniconda3/envs/*" },
+                exclude = {
+                  ".venv/*",
+                  "venv/*",
+                  "/home/lenow/.cache/pypoetry/virtualenvs/",
+                  "/home/lenow/miniconda3/envs/",
+                },
+                ignore = { "/home/lenow/.cache/pypoetry/virtualenvs/", "/home/lenow/miniconda3/envs/" },
                 diagnosticSeverityOverrides = {
-                  reportAny = "warning",
+                  reportAny = "information",
                   reportUnknownMemberType = "warning",
                   reportUnknownArgumentType = "warning",
                   reportUnknownParameterType = "warning",
@@ -37,6 +42,7 @@ return {
                 "basedpyright.createtypestub",
                 "basedpyright.organizeimports",
                 "basedpyright.unusedImport",
+                "basedpyright.dumpCodeFlowGraph",
                 "basedpyright.import",
                 "basedpyright.writeBaseline",
               },
@@ -44,12 +50,21 @@ return {
             }
           end,
         },
+        ---@class lspconfig.Config
+        ruff = {
+          settings = {
+            exclude = {
+              "/home/lenow/.cache/pypoetry/virtualenvs/",
+              "/home/lenow/miniconda3/envs/",
+            },
+          },
+        },
       },
     },
   },
   {
-    "stefanboca/venv-selector.nvim",
-    branch = "sb/push-rlpxsqmllxtz",
+    "linux-cultist/venv-selector.nvim",
+    branch = "regexp",
     enabled = true,
     cmd = "VenvSelect",
     opts = {
@@ -57,18 +72,11 @@ return {
         options = {
           notify_user_on_venv_activation = true,
         },
+        -- hooks = {},
       },
     },
     --  Call config for python files and load the cached venv automatically
     ft = "python",
     keys = { { "<leader>cv", "<cmd>:VenvSelect<cr>", desc = "Select VirtualEnv", ft = "python" } },
   },
-  -- {
-  --   "linux-cultist/venv-selector",
-  --   opts = {
-  --     settings = {
-  --       hooks = {},
-  --     },
-  --   },
-  -- },
 }
