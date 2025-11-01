@@ -64,7 +64,7 @@ return {
   },
   {
     "linux-cultist/venv-selector.nvim",
-    branch = "regexp",
+    branch = "main",
     enabled = true,
     cmd = "VenvSelect",
     opts = {
@@ -73,6 +73,16 @@ return {
           notify_user_on_venv_activation = true,
         },
         -- hooks = {},
+        search = {
+          miniconda_base = {
+            command = "$FD /python$ /home/lenow/miniconda3/bin/ --no-ignore-vcs --full-path --color never",
+            type = "anaconda",
+          },
+          miniconda_envs = {
+            command = "$FD 'bin/python$' /home/lenow/miniconda3/envs --no-ignore-vcs --full-path",
+            type = "anaconda",
+          },
+        },
       },
     },
     --  Call config for python files and load the cached venv automatically
