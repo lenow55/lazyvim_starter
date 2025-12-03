@@ -2,372 +2,244 @@ if true then
   return {}
 end
 
----Output the data from the API ready for insertion into the chat buffer
----@param self CodeCompanion.HTTPAdapter
----@param data table The streamed JSON data from the API, also formatted by the format_data handler
----@param tools? table The table to write any tool output to
----@return { status: string, output: { role: string, content: string, reasoning: string? } } | nil
-local reasoning_chat_output = function(self, data, tools)
-  if not data or data == "" then
-    return nil
-  end
-  local utils = require("codecompanion.utils.adapters")
-
-  -- Handle both streamed data and structured response
-  local data_mod = type(data) == "table" and data.body or utils.clean_streamed_data(data)
-  local ok, json = pcall(vim.json.decode, data_mod, { luanil = { object = true } })
-
-  if not ok or not json.choices or #json.choices == 0 then
-    return nil
-  end
-
-  -- Process tool calls from all choices
-  if self.opts.tools and tools then
-    for _, choice in ipairs(json.choices) do
-      local delta = self.opts.stream and choice.delta or choice.message
-
-      if delta and delta.tool_calls and #delta.tool_calls > 0 then
-        for i, tool in ipairs(delta.tool_calls) do
-          local tool_index = tool.index and tonumber(tool.index) or i
-
-          -- Some endpoints like Gemini do not set this (why?!)
-          local id = tool.id
-          if not id or id == "" then
-            id = string.format("call_%s_%s", json.created, i)
-          end
-
-          if self.opts.stream then
-            local found = false
-            for _, existing_tool in ipairs(tools) do
-              if existing_tool._index == tool_index then
-                -- Append to arguments if this is a continuation of a stream
-                if tool["function"] and tool["function"]["arguments"] then
-                  existing_tool["function"]["arguments"] = (existing_tool["function"]["arguments"] or "")
-                    .. tool["function"]["arguments"]
-                end
-                found = true
-                break
-              end
-            end
-
-            if not found then
-              table.insert(tools, {
-                _index = tool_index,
-                id = id,
-                type = tool.type,
-                ["function"] = {
-                  name = tool["function"]["name"],
-                  arguments = tool["function"]["arguments"] or "",
-                },
-              })
-            end
-          else
-            table.insert(tools, {
-              _index = i,
-              id = id,
-              type = tool.type,
-              ["function"] = {
-                name = tool["function"]["name"],
-                arguments = tool["function"]["arguments"],
-              },
-            })
-          end
-        end
-      end
-    end
-  end
-
-  -- Process message content from the first choice
-  local choice = json.choices[1]
-  local delta = self.opts.stream and choice.delta or choice.message
-
-  if not delta then
-    return nil
-  end
-
-  local output = {
-    role = delta.role,
-  }
-
-  -- Handle reasoning content if present
-  if delta.reasoning_content then
-    output.reasoning = {
-      content = delta.reasoning_content,
-    }
-  else
-    output.content = delta.content
-  end
-
-  return {
-    status = "success",
-    output = output,
-  }
-end
-
+local metadata_uid = {
+  order = 11,
+  mapping = "parameters",
+  type = "string",
+  desc = "ID пользователя для langfuse",
+  default = "IANovikov@lanit.ru",
+}
+local metadata_sid = {
+  order = 12,
+  mapping = "parameters",
+  type = "string",
+  desc = "ID сессии для langfuse",
+  default = "f685bad1-3f92-4e8b-bd99-95c791500000",
+}
+local landev_api = "here api key"
+local landev_url = "https://gpt-lb-dev01.landev.dks.lanit.ru/v1/chat/completions"
+-- local landev_url = "http://localhost:4000/v1/chat/completions"
 
 return {
-  -- {
-  --   "Davidyz/VectorCode",
-  --   -- version = "*", -- optional, depending on whether you're on nightly or release
-  --   branch = "cli/chroma_1.0.x",
-  --   build = "pipx upgrade vectorcode", -- optional but recommended. This keeps your CLI up-to-date.
-  --   dependencies = { "nvim-lua/plenary.nvim" },
-  --   opts = {
-  --     async_backend = "lsp", -- or "lsp"
-  --     async_opts = {
-  --       n_query = 2,
-  --       notify = true,
-  --     },
-  --     -- exclude_this = true,
-  --     n_query = 2,
-  --     notify = true,
-  --     timeout_ms = 5000,
-  --     on_setup = {
-  --       update = false, -- set to true to enable update when `setup` is called.
-  --       lsp = false,
-  --     },
-  --   },
-  -- },
-  -- {
-  --   "neovim/nvim-lspconfig",
-  --   ---@class PluginLspOpts
-  --   opts = {
-  --     ---@type lspconfig.options
-  --     servers = {
-  --       vectorcode_server = {
-  --         cmd_env = { VECTORCODE_LOG_LEVEL = "DEBUG" },
-  --       },
-  --     },
-  --   },
-  -- },
   {
     "olimorris/codecompanion.nvim",
     opts = {
       adapters = {
-        openrouter = function()
-          return require("codecompanion.adapters").extend("openai_compatible", {
-            env = {
-              url = "https://openrouter.ai/api",
-              api_key = "here api key",
-              chat_url = "/v1/chat/completions",
-              models_endpoint = "/v1/models",
-            },
-            schema = {
-              model = {
-                default = "qwen/qwen3-30b-a3b:free",
+        http = {
+          gemini = function()
+            return require("codecompanion.adapters.http").extend("gemini", {
+              env = {
+                api_key = "AIzaSyCjBfteoilTbz9bWkePA56K0uCfkBF1OCo",
               },
-              temperature = {
-                order = 2,
-                mapping = "parameters",
-                type = "number",
-                optional = true,
-                default = 0.8,
-                desc = "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. We generally recommend altering this or top_p but not both.",
-                validate = function(n)
-                  return n >= 0 and n <= 2, "Must be between 0 and 2"
-                end,
-              },
-              max_completion_tokens = {
-                order = 3,
-                mapping = "parameters",
-                type = "integer",
-                optional = true,
-                default = nil,
-                desc = "An upper bound for the number of tokens that can be generated for a completion.",
-                validate = function(n)
-                  return n > 0, "Must be greater than 0"
-                end,
-              },
-              stop = {
-                order = 4,
-                mapping = "parameters",
-                type = "string",
-                optional = true,
-                default = nil,
-                desc = "Sets the stop sequences to use. When this pattern is encountered the LLM will stop generating text and return. Multiple stop patterns may be set by specifying multiple separate stop parameters in a modelfile.",
-                validate = function(s)
-                  return s:len() > 0, "Cannot be an empty string"
-                end,
-              },
-              -- работает хреново, так как нормально в дебаге не отображается
-              chat_template_kwargs = {
-                order = 5,
-                mapping = "parameters",
-                type = "map",
-                optional = true,
-                -- default = { ["enable_thinking"] = false },
-                default = nil,
-                desc = "Extra body params for vllm",
-                subtype_key = {
-                  type = "string",
+            })
+          end,
+          gpt5_landev = function()
+            local adapter = require("codecompanion.adapters.http").resolve("openai_responses", {})
+            adapter.url = "https://gpt-lb-dev01.landev.dks.lanit.ru/v1/responses"
+            adapter.env = {
+              api_key = landev_api,
+            }
+            adapter.parameters = {
+              store = false,
+            }
+
+            adapter.opts = {
+              stream = false,
+            }
+            adapter.schema.model = {
+              order = 1,
+              mapping = "parameters",
+              type = "enum",
+              desc = "ID of the model to use. See the model endpoint compatibility table for details on which models work with the Chat API.",
+              ---@type string|fun(): string
+              default = "openai/gpt-5",
+              choices = {
+                ["openai/gpt-5"] = {
+                  formatted_name = "GPT 5",
+                  opts = { has_function_calling = true, has_vision = true, can_reason = false },
                 },
-                subtype = {
-                  type = "boolean",
+                -- ["openai/gpt-5-mini"] = {
+                --   formatted_name = "GPT 5 Mini",
+                --   opts = { has_vision = true, can_reason = true },
+                -- },
+                -- ["openai/gpt-5-nano"] = {
+                --   formatted_name = "GPT 5 Nano",
+                --   opts = { has_vision = true, can_reason = true },
+                -- },
+                ["openai/gpt-5-codex"] = {
+                  formatted_name = "GPT 5 Codex",
+                  opts = { has_function_calling = true, has_vision = true, can_reason = true },
                 },
-                validate = function(s)
-                  return true, "OK"
-                end,
+                -- ["openai/gpt-5-pro"] = {
+                --   formatted_name = "GPT 5 Pro",
+                --   opts = { has_vision = true, can_reason = true },
+                -- },
               },
-            },
-            opts = {
-              stream = true,
-              can_reason = true,
-            },
-            handlers = {
-              chat_output = reasoning_chat_output,
-            },
-          })
-        end,
-        landev_openai = function()
-          return require("codecompanion.adapters").extend("openai_compatible", {
-            env = {
-              url = "https://gpt-api.lanit.dev/balancer",
-              api_key = "here api key",
-              chat_url = "/v1/chat/completions",
-              models_endpoint = "/v1/models",
-            },
-            raw = {
-              "--header",
-              "langfuse_trace_user_id: username",
-              "--header",
-              "langfuse_session_id: session-uuid",
-            },
-            schema = {
-              model = {
-                default = "Qwen/Qwen2.5-72B-Instruct-GPTQ-Int8",
+            }
+            adapter.schema["reasoning.summary"].default = nil
+            adapter.schema["metadata.trace_user_id"] = metadata_uid
+            adapter.schema["metadata.session_id"] = metadata_sid
+            return adapter
+          end,
+          openrouter_landev = function()
+            local adapter = require("codecompanion.adapters.http").resolve("openai", {})
+            adapter.url = landev_url
+            adapter.env = {
+              api_key = landev_api,
+            }
+            adapter.parameters = {
+              store = false,
+            }
+            adapter.schema.model = {
+              order = 1,
+              mapping = "parameters",
+              type = "enum",
+              desc = "ID of the model to use. See the model endpoint compatibility table for details on which models work with the Chat API.",
+              default = "openrouter/anthropic/claude-sonnet-4",
+              choices = {
+                ["openrouter/anthropic/claude-sonnet-4.5"] = {
+                  formatted_name = "Claude Sonnet 4.5",
+                  opts = { has_function_calling = false, can_reason = true, has_vision = true },
+                },
+                ["openrouter/anthropic/claude-haiku-4.5"] = {
+                  formatted_name = "Claude Haiku 4.5",
+                  opts = { has_function_calling = false, can_reason = true, has_vision = true },
+                },
+
+                ["openrouter/anthropic/claude-sonnet-4"] = {
+                  formatted_name = "Claude Sonnet 4",
+                  opts = { has_function_calling = false, can_reason = true, has_vision = true },
+                },
+                ["openrouter/anthropic/claude-3.7-sonnet"] = {
+                  formatted_name = "Claude 3.7 Sonnet",
+                  opts = {
+                    has_function_calling = false,
+                    can_reason = true,
+                    has_vision = true,
+                    has_token_efficient_tools = true,
+                  },
+                },
+                ["openrouter/anthropic/claude-3.5-sonnet"] = {
+                  formatted_name = "Claude Sonnet 3.5",
+                  opts = { has_function_calling = true, has_vision = true },
+                },
+                ["openrouter/qwen/qwen3-coder"] = {
+                  formatted_name = "Qwen3-Coder",
+                  opts = { has_function_calling = true, can_reason = true, has_vision = false },
+                },
               },
-              temperature = {
-                order = 2,
-                mapping = "parameters",
-                type = "number",
-                optional = true,
-                default = 0.8,
-                desc = "What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic. We generally recommend altering this or top_p but not both.",
-                validate = function(n)
-                  return n >= 0 and n <= 2, "Must be between 0 and 2"
-                end,
+            }
+            adapter.schema["reasoning.effort"] = adapter.schema.reasoning_effort
+            adapter.schema.reasoning_effort = nil
+            adapter.schema["metadata.trace_user_id"] = metadata_uid
+            adapter.schema["metadata.session_id"] = metadata_sid
+
+            adapter.handlers.parse_message_meta = function(self, data)
+              local extra = data.extra
+              if extra.reasoning_content then
+                data.output.reasoning = { content = extra.reasoning_content }
+                if data.output.content == "" then
+                  data.output.content = nil
+                end
+              end
+              return data
+            end
+            return adapter
+          end,
+          local_landev = function()
+            local adapter = require("codecompanion.adapters.http").resolve("openai", {})
+            adapter.url = landev_url
+            adapter.env = {
+              api_key = landev_api,
+            }
+            adapter.parameters = {
+              store = false,
+            }
+            adapter.schema.model = {
+              order = 1,
+              mapping = "parameters",
+              type = "enum",
+              desc = "ID of the model to use. See the model endpoint compatibility table for details on which models work with the Chat API.",
+              default = "local/Qwen/Qwen3-32B",
+              choices = {
+                ["Qwen/Qwen2.5-72B-Instruct-GPTQ-Int8"] = {
+                  formatted_name = "Qwen2.5-72B",
+                  opts = { has_function_calling = false, can_reason = true, has_vision = false },
+                },
+                ["local/Qwen/Qwen3-32B"] = {
+                  formatted_name = "Qwen3-32B",
+                  opts = { has_function_calling = false, can_reason = false, has_vision = false },
+                },
               },
-              max_completion_tokens = {
-                order = 3,
-                mapping = "parameters",
-                type = "integer",
-                optional = true,
-                default = nil,
-                desc = "An upper bound for the number of tokens that can be generated for a completion.",
-                validate = function(n)
-                  return n > 0, "Must be greater than 0"
-                end,
-              },
-              stop = {
-                order = 4,
-                mapping = "parameters",
-                type = "string",
-                optional = true,
-                default = nil,
-                desc = "Sets the stop sequences to use. When this pattern is encountered the LLM will stop generating text and return. Multiple stop patterns may be set by specifying multiple separate stop parameters in a modelfile.",
-                validate = function(s)
-                  return s:len() > 0, "Cannot be an empty string"
-                end,
-              },
-            },
-            handlers = {
-              chat_output = reasoning_chat_output,
-            },
-            opts = {
-              stream = true,
-              can_reason = true,
-            },
-          })
-        end,
+            }
+            adapter.schema["chat_template_kwargs.enable_thinking"] = {
+              order = 2,
+              mapping = "parameters",
+              type = "boolean",
+              desc = "Флаг рассуждений",
+              default = true,
+              optional = true,
+              condition = function(self)
+                local model = self.schema.model.default
+                if type(model) == "function" then
+                  model = model()
+                end
+                local choices = self.schema.model.choices
+                if type(choices) == "function" then
+                  choices = choices(self)
+                end
+                if choices and choices[model] and choices[model].opts and choices[model].opts.can_reason then
+                  return true
+                end
+                return false
+              end,
+            }
+            adapter.schema.reasoning_effort = nil
+            adapter.schema["metadata.trace_user_id"] = metadata_uid
+            adapter.schema["metadata.session_id"] = metadata_sid
+
+            adapter.handlers.parse_message_meta = function(self, data)
+              local extra = data.extra
+              if extra.reasoning_content then
+                data.output.reasoning = { content = extra.reasoning_content }
+                if data.output.content == "" then
+                  data.output.content = nil
+                end
+              end
+              return data
+            end
+            return adapter
+          end,
+          opts = {
+            show_defaults = false,
+            show_model_choices = true,
+          },
+        },
+        acp = {
+          opts = {
+            show_defaults = false,
+            show_model_choices = true,
+          },
+        },
       },
       strategies = {
         chat = {
-          adapter = "my_openai",
-          keymaps = {
-            regenerate = {
-              modes = {
-                n = "<leader>Cr",
-              },
-              index = 3,
-              callback = "keymaps.regenerate",
-              description = "Regenerate the last response",
-            },
-            clear = {
-              modes = {
-                n = "<leader>Cx",
-              },
-              index = 6,
-              callback = "keymaps.clear",
-              description = "Clear Chat",
-            },
-            codeblock = {
-              modes = {
-                n = "<leader>Cc",
-              },
-              index = 7,
-              callback = "keymaps.codeblock",
-              description = "Insert Codeblock",
-            },
-            yank_code = {
-              modes = {
-                n = "<leader>Cy",
-              },
-              index = 8,
-              callback = "keymaps.yank_code",
-              description = "Yank Code",
-            },
-            debug = {
-              modes = {
-                n = "<leader>Cd",
-              },
-              index = 16,
-              callback = "keymaps.debug",
-              description = "View debug info",
-            },
-          },
+          adapter = "local_landev",
         },
         inline = {
-          adapter = "my_openai",
+          adapter = "local_landev",
         },
         cmd = {
-          adapter = "my_openai",
+          adapter = "local_landev",
         },
       },
       opts = {
         language = "Russian",
-        log_level = "TRACE",
-      },
-      extensions = {
-        -- vectorcode = {
-        --   opts = {
-        --     add_tool = true,
-        --     add_slash_command = true,
-        --     -- tool_opts = {},
-        --   },
-        -- },
-        mcphub = {
-          callback = "mcphub.extensions.codecompanion",
-          opts = {
-            show_result_in_chat = true, -- Show mcp tool results in chat
-            make_vars = true, -- Convert resources to #variables
-            make_slash_commands = true, -- Add prompts as /slash commands
-          },
-        },
-      },
-      display = {
-        chat = {
-          icons = {
-            chat_context = "📎️", -- You can also apply an icon to the fold
-            chat_fold = "📎️",
-          },
-          fold_context = false,
-          fold_reasoning = true,
-        },
+        log_level = "INFO",
       },
     },
     dependencies = {
       "nvim-lua/plenary.nvim",
-      "nvim-treesitter/nvim-treesitter",
     },
   },
 }
