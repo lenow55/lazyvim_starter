@@ -16,7 +16,7 @@ local metadata_sid = {
   desc = "ID сессии для langfuse",
   default = "f685bad1-3f92-4e8b-bd99-95c791500000",
 }
-local landev_api = "here api key"
+local landev_api = "sk-key"
 local landev_url = "https://gpt-lb-dev01.landev.dks.lanit.ru/v1/chat/completions"
 -- local landev_url = "http://localhost:4000/v1/chat/completions"
 
@@ -29,7 +29,7 @@ return {
           gemini = function()
             return require("codecompanion.adapters.http").extend("gemini", {
               env = {
-                api_key = "AIzaSyCjBfteoilTbz9bWkePA56K0uCfkBF1OCo",
+                api_key = "api_key",
               },
             })
           end,
@@ -211,26 +211,42 @@ return {
             return adapter
           end,
           opts = {
-            show_defaults = false,
+            allow_insecure = true,
+            show_presets = false,
             show_model_choices = true,
           },
         },
         acp = {
           opts = {
-            show_defaults = false,
+            show_presets = false,
             show_model_choices = true,
           },
         },
       },
-      strategies = {
+      interactions = {
+        background = {
+          adapter = {
+            name = "openrouter_landev",
+            model = "openrouter/anthropic/claude-sonnet-4",
+          },
+        },
         chat = {
-          adapter = "local_landev",
+          adapter = {
+            name = "local_landev",
+            model = "local/Qwen/Qwen3-32B",
+          },
         },
         inline = {
-          adapter = "local_landev",
+          adapter = {
+            name = "openrouter_landev",
+            model = "openrouter/anthropic/claude-sonnet-4",
+          },
         },
         cmd = {
-          adapter = "local_landev",
+          adapter = {
+            name = "local_landev",
+            model = "local/Qwen/Qwen3-32B",
+          },
         },
       },
       opts = {
@@ -240,6 +256,7 @@ return {
     },
     dependencies = {
       "nvim-lua/plenary.nvim",
+      "nvim-treesitter/nvim-treesitter",
     },
   },
 }
