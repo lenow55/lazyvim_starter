@@ -16,6 +16,27 @@ return {
         -- file_path = "/home/lenow/.local/state/nvim/mcphub.log",
       },
       use_bundled_binary = true, -- Use local `mcp-hub` binary
+      auto_approve = function(params)
+        -- Respect CodeCompanion's auto tool mode when enabled
+        if vim.g.codecompanion_auto_tool_mode == true then
+          return true -- Auto approve when CodeCompanion auto-tool mode is on
+        end
+
+        -- Auto-approve safe file operations in current project
+        if params.tool_name == "read_file" then
+          local path = params.arguments.path or ""
+          if path:match("^" .. vim.fn.getcwd()) then
+            return true -- Auto approve
+          end
+        end
+
+        -- Check if tool is configured for auto-approval in servers.json
+        if params.is_auto_approved_in_server then
+          return true -- Respect servers.json configuration
+        end
+
+        return false -- Show confirmation prompt
+      end,
     },
   },
   {
