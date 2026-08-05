@@ -18,7 +18,13 @@ return {
                   "/home/lenow/.cache/pypoetry/virtualenvs/",
                   "/home/lenow/miniconda3/envs/",
                 },
-                ignore = { "/home/lenow/.cache/pypoetry/virtualenvs/", "/home/lenow/miniconda3/envs/" },
+                ignore = {
+                  ".venv/*",
+                  "venv/*",
+                  "typings/*",
+                  "/home/lenow/.cache/pypoetry/virtualenvs/",
+                  "/home/lenow/miniconda3/envs/",
+                },
                 diagnosticSeverityOverrides = {
                   reportAny = "information",
                   reportUnknownMemberType = "warning",
@@ -49,6 +55,55 @@ return {
               workDoneProgress = true,
             }
           end,
+          enabled = true,
+        },
+        ---@class lspconfig.Config
+        pyrefly = {
+          settings = {
+            python = {
+              pyrefly = {
+                displayTypeErrors = "force-on",
+                analysis = {
+                  diagnosticMode = "workspace",
+                },
+                project_excludes = {
+                  "**/.venv/**",
+                  "**/venv/**",
+                  "/home/lenow/.cache/pypoetry/virtualenvs/**",
+                  "/home/lenow/miniconda3/envs/**",
+                },
+              },
+            },
+          },
+          enabled = false,
+        },
+        ---@class lspconfig.Config
+        ty = {
+          cmd = { "ty", "server" },
+          filetypes = { "python" },
+          settings = {
+            ty = {
+              configuration = {
+                src = {
+                  exclude = {
+                    ".venv/**",
+                    "venv/**",
+                    "/home/lenow/.cache/pypoetry/virtualenvs/**",
+                    "/home/lenow/miniconda3/envs/**",
+                  },
+                },
+              },
+            },
+          },
+          root_markers = { "ty.toml", "pyproject.toml", "setup.py", "setup.cfg", "requirements.txt", ".git" },
+          init_options = {
+            logFile = "~/.local/state/nvim/ty.log",
+            logLevel = "trace",
+            diagnosticMode = "workspace",
+            -- c workspace диагностикой не работает в neovim, так как
+            -- он не поддерживает стримминг диагностики
+          },
+          enabled = false,
         },
         ---@class lspconfig.Config
         ruff = {
