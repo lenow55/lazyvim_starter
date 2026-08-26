@@ -8,6 +8,10 @@ local parse_reasoning = function(data)
     data.output.reasoning = data.output.reasoning or {}
     data.output.reasoning.content = extra.reasoning_content
   end
+  if extra and extra.reasoning and extra.reasoning ~= "" then
+    data.output.reasoning = data.output.reasoning or {}
+    data.output.reasoning.content = extra.reasoning
+  end
   if data.output.content == "" then
     data.output.content = nil
   end
@@ -23,7 +27,6 @@ local metadata_uid = {
 }
 
 local landev_url = "https://dev02-lb.gpt.dks.lanit.ru/v1/chat/completions"
--- local landev_url = "http://10.55.121.11:8000/v1/chat/completions"
 -- local landev_url = "http://litellm.dev02.svc.cluster.local:4000/v1/chat/completions"
 
 return {
@@ -106,63 +109,6 @@ return {
             end
             return adapter
           end,
-          megallm = function()
-            local adapter = require("codecompanion.adapters.http").resolve("openai", {})
-            adapter.url = "http://megallm:8777/v1/chat/completions"
-            adapter.env = {
-              api_key = "EMPTY",
-            }
-            adapter.parameters = {
-              store = false,
-            }
-            adapter.schema.model = {
-              order = 1,
-              mapping = "parameters",
-              type = "enum",
-              desc = "ID of the model to use. See the model endpoint compatibility table for details on which models work with the Chat API.",
-              default = "google/Gemma-4-31B-it",
-              choices = {
-                ["google/Gemma-4-31B-it"] = {
-                  formatted_name = "Gemma-4-32B",
-                  opts = { has_function_calling = false, can_reason = true, has_vision = false },
-                },
-                -- ["Qwen/Qwen3-32B-FP8"] = {
-                --   formatted_name = "Qwen3-32B",
-                --   opts = { has_function_calling = false, can_reason = true, has_vision = false },
-                -- },
-              },
-            }
-            adapter.schema["chat_template_kwargs.enable_thinking"] = {
-              order = 2,
-              mapping = "parameters",
-              type = "boolean",
-              desc = "Флаг рассуждений",
-              default = true,
-              optional = true,
-              condition = function(self)
-                local model = self.schema.model.default
-                if type(model) == "function" then
-                  model = model()
-                end
-                local choices = self.schema.model.choices
-                if type(choices) == "function" then
-                  choices = choices(self)
-                end
-                if choices and choices[model] and choices[model].opts and choices[model].opts.can_reason then
-                  return true
-                end
-                return false
-              end,
-            }
-            adapter.schema.reasoning_effort = nil
-            adapter.schema["metadata.trace_user_id"] = metadata_uid
-            adapter.schema["metadata.session_id"] = metadata_sid
-
-            adapter.handlers.parse_message_meta = function(self, data)
-              data = parse_reasoning(data)
-              return data
-            end
-          end,
           opts = {
             allow_insecure = true,
             show_presets = false,
@@ -177,6 +123,9 @@ return {
         },
       },
       interactions = {
+        -- opts = {
+        --   date_format = "%Y-%m-%d",
+        -- },
         background = {
           adapter = {
             name = "local_landev",
