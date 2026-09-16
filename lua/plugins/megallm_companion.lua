@@ -2,21 +2,7 @@
 --   return {}
 -- end
 
-local parse_reasoning = function(data)
-  local extra = data.extra
-  if extra and extra.reasoning_content and extra.reasoning_content ~= "" then
-    data.output.reasoning = data.output.reasoning or {}
-    data.output.reasoning.content = extra.reasoning_content
-  end
-  if extra and extra.reasoning and extra.reasoning ~= "" then
-    data.output.reasoning = data.output.reasoning or {}
-    data.output.reasoning.content = extra.reasoning
-  end
-  if data.output.content == "" then
-    data.output.content = nil
-  end
-  return data
-end
+local cc_utils = require("utils.codecompanion")
 
 local megallm_url = "http://megallm:8777/v1/chat/completions"
 
@@ -28,28 +14,10 @@ return {
         http = {
           megallm = function()
             local adapter = require("codecompanion.adapters.http").resolve("openai", {})
-            local adapter_utils = require("codecompanion.adapters.utils")
             adapter.url = megallm_url
             adapter.env = {
               api_key = "EMPTY",
             }
-            ---@param self CodeCompanion.HTTPAdapter
-            ---@return table|nil
-            local function model_choices(self)
-              local model = self.schema.model.choices[self.schema.model.default]
-              return model and model.opts or nil
-            end
-
-            ---@param self CodeCompanion.HTTPAdapter
-            ---@param parameter string
-            ---@return boolean
-            local function model_supports(self, parameter)
-              local model = self.schema.model.choices[self.schema.model.default]
-              if not model then
-                return false
-              end
-              return model.opts.supported_parameters[parameter] or false
-            end
             ---Устанавливаем id сессии для работы litellm
             ---@param self CodeCompanion.HTTPAdapter
             ---@param data table The request payload built by the chat buffer
@@ -62,7 +30,7 @@ return {
                 return { metadata = { session_id = data.session_id } }
               end
             end
-            adapter.schema = {
+            adapter.schema = vim.tbl_deep_extend("error", {
               model = {
                 order = 1,
                 mapping = "parameters",
@@ -129,59 +97,25 @@ return {
                 optional = true,
                 desc = "Включение рассуждений в vllm",
                 enabled = function(self)
-                  local choices = model_choices(self)
+                  local choices = cc_utils.model_choices(self)
                   return (choices and choices.can_reason) or false
                 end,
                 ---@param self CodeCompanion.HTTPAdapter
                 ---@return boolean
                 default = function(self)
-                  local choices = model_choices(self)
+                  local choices = cc_utils.model_choices(self)
                   return (choices and choices.reasoning and choices.reasoning.default_enabled) or false
                 end,
               },
-              ["reasoning_effort"] = {
-                order = 3,
-                mapping = "parameters",
-                type = "string",
-                optional = true,
-                ---@param self CodeCompanion.HTTPAdapter
-                ---@return string
-                default = function(self)
-                  local choices = model_choices(self)
-                  return (choices and choices.reasoning and choices.reasoning.default_effort) or "medium"
-                end,
-                enabled = function(self)
-                  return model_supports(self, "reasoning_effort")
-                end,
-                desc = "Constrains effort on reasoning for reasoning models. Reducing reasoning effort can result in faster responses and fewer tokens used on reasoning in a response. Not all efforts are supported by every model.",
-                ---@param self CodeCompanion.HTTPAdapter
-                ---@return string[]
-                choices = function(self)
-                  local choices = model_choices(self)
-                  if choices and choices.reasoning and choices.reasoning.supported_efforts then
-                    return choices.reasoning.supported_efforts
-                  end
-                  return { "xhigh", "high", "medium", "low", "minimal", "none" }
-                end,
-              },
               ["metadata.trace_user_id"] = {
-                order = 4,
+                order = 3,
                 mapping = "parameters",
                 type = "string",
                 desc = "ID пользователя для langfuse",
                 default = "IANovikov@lanit.ru",
               },
-            }
-
-            local original_form_messages = adapter.handlers.form_messages
-            adapter.handlers.form_messages = function(self, messages)
-              messages = adapter_utils.merge_system_messages(messages)
-              return original_form_messages(self, messages)
-            end
-            adapter.handlers.parse_message_meta = function(self, data)
-              data = parse_reasoning(data)
-              return data
-            end
+            }, cc_utils.common_schema)
+            cc_utils.apply_common_handlers(adapter)
             return adapter
           end,
         },
