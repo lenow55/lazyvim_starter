@@ -1,6 +1,6 @@
--- if true then
---   return {}
--- end
+if true then
+  return {}
+end
 
 local cc_utils = require("utils.codecompanion")
 
@@ -24,7 +24,7 @@ return {
               vision = true,
             }
 
-            adapter.schema = vim.tbl_deep_extend("error", {
+            adapter.schema = vim.tbl_deep_extend("keep", {
               model = {
                 order = 1,
                 mapping = "parameters",
@@ -115,7 +115,7 @@ return {
                 },
               },
             }, cc_utils.common_schema)
-            cc_utils.apply_common_handlers(adapter)
+            cc_utils.apply_reasoning_sysmerge_handler(adapter)
             return adapter
           end,
         },

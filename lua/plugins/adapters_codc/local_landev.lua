@@ -1,10 +1,10 @@
--- if true then
---   return {}
--- end
+if true then
+  return {}
+end
 
 local cc_utils = require("utils.codecompanion")
-
-local megallm_url = "http://megallm:8777/v1/chat/completions"
+local landev_url = "https://dev02-lb.gpt.dks.lanit.ru/v1/chat/completions"
+-- local landev_url = "http://litellm.dev02.svc.cluster.local:4000/v1/chat/completions"
 
 return {
   {
@@ -12,33 +12,26 @@ return {
     opts = {
       adapters = {
         http = {
-          megallm = function()
+          local_landev = function()
             local adapter = require("codecompanion.adapters.http").resolve("openai", {})
-            adapter.url = megallm_url
+            adapter.url = landev_url
             adapter.env = {
-              api_key = "EMPTY",
+              api_key = "LANDEV_API_KEY",
             }
-            ---Устанавливаем id сессии для работы litellm
-            ---@param self CodeCompanion.HTTPAdapter
-            ---@param data table The request payload built by the chat buffer
-            ---@return table|nil
-            adapter.handlers.set_body = function(self, data)
-              if self.opts and self.opts.session_id then
-                return { metadata = { session_id = self.opts.session_id } }
-              end
-              if data and data.session_id then
-                return { metadata = { session_id = data.session_id } }
-              end
-            end
-            adapter.schema = vim.tbl_deep_extend("error", {
+            adapter.opts = {
+              stream = true,
+              tools = true,
+              vision = true,
+            }
+            adapter.schema = vim.tbl_deep_extend("keep", {
               model = {
                 order = 1,
                 mapping = "parameters",
                 type = "enum",
                 desc = "ID of the model to use. See the model endpoint compatibility table for details on which models work with the Chat API.",
-                default = "Qwen/Qwen3.8-27B-FP8",
+                default = "local/google/gemma-4-31B-it",
                 choices = {
-                  ["google/Gemma-4-31B-it"] = {
+                  ["local/google/gemma-4-31B-it"] = {
                     formatted_name = "Gemma-4-31B",
                     meta = { context_window = 40000 },
                     opts = {
@@ -49,14 +42,14 @@ return {
                       supported_parameters = {},
                     },
                   },
-                  ["Qwen/Qwen3.8-27B-FP8"] = {
+                  ["local/Qwen/Qwen3.8-27B-FP8"] = {
                     formatted_name = "Qwen3.8-27B",
                     meta = { context_window = 200000 },
                     opts = {
                       can_form_structured_outputs = true,
                       can_use_tools = true,
                       can_reason = true,
-                      has_vision = false,
+                      has_vision = true,
                       supported_parameters = {
                         reasoning_effort = true,
                         preserve_thinking = true,
@@ -107,15 +100,10 @@ return {
                   return (choices and choices.reasoning and choices.reasoning.default_enabled) or false
                 end,
               },
-              ["metadata.trace_user_id"] = {
-                order = 3,
-                mapping = "parameters",
-                type = "string",
-                desc = "ID пользователя для langfuse",
-                default = "IANovikov@lanit.ru",
-              },
+              ["metadata.trace_user_id"] = cc_utils.metadata_uid,
             }, cc_utils.common_schema)
-            cc_utils.apply_common_handlers(adapter)
+            cc_utils.apply_reasoning_sysmerge_handler(adapter)
+            cc_utils.apply_session_handler(adapter)
             return adapter
           end,
         },

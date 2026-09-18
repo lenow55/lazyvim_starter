@@ -25,7 +25,7 @@ end
 ---* merge system-сообщений в form_messages
 ---* парсинг reasoning в parse_message_meta
 ---@param adapter CodeCompanion.HTTPAdapter
-function M.apply_common_handlers(adapter)
+function M.apply_reasoning_sysmerge_handler(adapter)
   -- ленивый require: на момент загрузки спеков сам codecompanion.nvim ещё не загружен
   local adapter_utils = require("codecompanion.adapters.utils")
   local original_form_messages = adapter.handlers.form_messages
@@ -35,6 +35,21 @@ function M.apply_common_handlers(adapter)
   end
   adapter.handlers.parse_message_meta = function(self, data)
     return M.parse_reasoning(data)
+  end
+end
+
+---@param adapter CodeCompanion.HTTPAdapter
+function M.apply_session_handler(adapter)
+  ---@param self CodeCompanion.HTTPAdapter
+  ---@param data table The request payload built by the chat buffer
+  ---@return table|nil
+  adapter.handlers.set_body = function(self, data)
+    if self.opts and self.opts.session_id then
+      return { metadata = { session_id = self.opts.session_id } }
+    end
+    if data and data.session_id then
+      return { metadata = { session_id = data.session_id } }
+    end
   end
 end
 
@@ -55,6 +70,14 @@ function M.model_supports(adapter, parameter)
   end
   return model.opts.supported_parameters[parameter] or false
 end
+
+M.metadata_uid = {
+  order = 30,
+  mapping = "parameters",
+  type = "string",
+  desc = "ID пользователя для langfuse",
+  default = "IANovikov@lanit.ru",
+}
 
 M.common_schema = {
   ["reasoning_effort"] = {

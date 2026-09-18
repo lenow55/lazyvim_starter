@@ -1,7 +1,8 @@
--- if true then
---   return {}
--- end
+if true then
+  return {}
+end
 
+local cc_utils = require("utils.codecompanion")
 local landev_url = "https://dev02-lb.gpt.dks.lanit.ru/v1/chat/completions"
 
 return {
@@ -56,20 +57,6 @@ return {
               tokens = true,
             }
             adapter.available_tools = {}
-            ---@param self CodeCompanion.HTTPAdapter
-            ---@param data table The request payload built by the chat buffer
-            ---@return table|nil
-            adapter.handlers.set_body = function(self, data)
-              -- A user's session ID takes priority...
-              if self.opts and self.opts.session_id then
-                return { metadata = { session_id = self.opts.session_id } }
-              end
-
-              -- ...over one from the chat buffer
-              if data and data.session_id then
-                return { metadata = { session_id = data.session_id } }
-              end
-            end
             adapter.schema = {
               model = {
                 order = 1,
@@ -86,7 +73,6 @@ return {
                   return prefixed
                 end,
               },
-
               ["reasoning.effort"] = {
                 order = 2,
                 mapping = "parameters",
@@ -233,14 +219,9 @@ return {
                   end,
                 },
               },
-              ["metadata.trace_user_id"] = {
-                order = 21,
-                mapping = "parameters",
-                type = "string",
-                desc = "ID пользователя для langfuse",
-                default = "IANovikov@lanit.ru",
-              },
+              ["metadata.trace_user_id"] = cc_utils.metadata_uid,
             }
+            cc_utils.apply_session_handler(adapter)
             return adapter
           end,
         },
