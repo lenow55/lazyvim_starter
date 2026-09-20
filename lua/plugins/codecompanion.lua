@@ -49,6 +49,16 @@ return {
             model = "local/google/gemma-4-31B-it",
           },
           tools = {
+            ["delete_file"] = {
+              opts = {
+                judge_in_yolo_mode = true,
+              },
+            },
+            ["run_command"] = {
+              opts = {
+                judge_in_yolo_mode = true,
+              },
+            },
             opts = {
               system_prompt = {
                 enabled = true,
