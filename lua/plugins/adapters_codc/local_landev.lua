@@ -44,7 +44,7 @@ return {
                   },
                   ["local/Qwen/Qwen3.8-27B-FP8"] = {
                     formatted_name = "Qwen3.8-27B",
-                    meta = { context_window = 200000 },
+                    meta = { context_window = 262144 },
                     opts = {
                       can_form_structured_outputs = true,
                       can_use_tools = true,
