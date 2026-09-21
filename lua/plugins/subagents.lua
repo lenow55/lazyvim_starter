@@ -31,7 +31,6 @@ return {
                 mcp_servers = "inherit",
                 context_mode = "inherit",
                 result_spec = "A brief summary of what you have done, or errors/exceptions encountered that prevented you from completing the task.",
-                default_power = "medium",
               },
               code_reviewer = {
                 description = "Reviews code for bugs, style issues, and improvements",
