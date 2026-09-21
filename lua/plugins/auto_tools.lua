@@ -12,7 +12,7 @@ return {
     },
     opts = {
       extensions = {
-        automcp = {
+        auto_tools = {
           opts = {
             collapse_tools = true,
             no_approval_for = {
@@ -26,13 +26,13 @@ return {
               "context7",
             },
             tool_opts = {
-              list_tool_groups = {
+              list_tools = {
                 require_approval_before = false,
               },
-              enable_tool_group = {
+              enable_tool = {
                 require_approval_before = true,
               },
-              disable_tool_group = {
+              disable_tool = {
                 require_approval_before = false,
               },
             },
