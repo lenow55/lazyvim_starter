@@ -16,6 +16,22 @@ return {
         -- file_path = "/home/lenow/.local/state/nvim/mcphub.log",
       },
       use_bundled_binary = true, -- Use local `mcp-hub` binary
+      mcp_request_timeout = 300000,
+      builtin_tools = {
+        edit_file = {
+          ui = {
+            go_to_origin_on_complete = true,
+            keybindings = {
+              accept = ".",
+              reject = ",",
+              next = "n",
+              prev = "p",
+              accept_all = "za",
+              reject_all = "zr",
+            },
+          },
+        },
+      },
       auto_approve = function(params)
         -- Respect CodeCompanion's auto tool mode when enabled
         if vim.g.codecompanion_auto_tool_mode == true then
@@ -46,7 +62,7 @@ return {
         mcphub = {
           callback = "mcphub.extensions.codecompanion",
           opts = {
-            show_result_in_chat = true, -- Show mcp tool results in chat
+            show_result_in_chat = false, -- Show mcp tool results in chat
             make_vars = true, -- Convert resources to #variables
             make_slash_commands = true, -- Add prompts as /slash commands
           },
