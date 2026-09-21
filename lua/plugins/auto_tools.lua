@@ -15,6 +15,8 @@ return {
         auto_tools = {
           opts = {
             collapse_tools = true,
+            individual_tools = { "subagents_*" },
+            deny_groups = { "agent*" },
             no_approval_for = {
               "git",
               "agent_skills",
