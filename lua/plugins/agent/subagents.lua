@@ -49,6 +49,7 @@ Hard constraints (in addition to the template):
                   "read_file",
                   "grep_search",
                   "file_search",
+                  "agent_skills",
                   "get_changed_files",
                   "get_diagnostics",
                 },
@@ -79,7 +80,7 @@ Your workflow:
 4. **Synthesize**: Compile the research findings into a comprehensive report that directly answers the original question, including citations for all sources used.
 ]],
                 mcp_servers = {},
-                tools = { "tavily", "github" },
+                tools = { "tavily", "agent_skills", "github" },
                 context_spec = "The question or topic to research",
                 result_spec = [[A comprehensive research report that includes:
 - A clear and concise answer to the research question
