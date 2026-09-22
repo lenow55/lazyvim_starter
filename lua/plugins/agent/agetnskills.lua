@@ -13,7 +13,8 @@ return {
             paths = {
               -- "~/.claude/skills/codebase-memory",
               -- "~/my-agent-skills", -- Single directory (non-recursive)
-              -- { "~/.config/nvim/skills", recursive = true }, -- Recursive search
+              -- { "~/.config/nvim/lazyvim_starter/skills/", recursive = true }, -- Recursive search
+              -- { "~/.local/share/nvim/codecompanion/superpowers/skills", recursive = true }, -- Recursive search
               -- { "~/lanit_projects/landev/code-agent-skills", recursive = true }, -- Recursive search
             },
           },

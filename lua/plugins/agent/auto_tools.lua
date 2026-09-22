@@ -15,17 +15,18 @@ return {
         auto_tools = {
           opts = {
             collapse_tools = true,
-            individual_tools = { "subagents_*" },
-            deny_groups = { "agent*" },
+            individual_tools = { "subagent_*", "read_file" },
+            deny_groups = { "agent*", "mcp" },
             no_approval_for = {
               "git",
-              "agent_skills",
-              "codebase_memory_mcp",
               "github",
               "neovim",
+              "files",
               "tavily",
               "fetch",
               "context7",
+              "agent_skills",
+              "codebase_memory_mcp",
             },
             tool_opts = {
               list_tools = {
