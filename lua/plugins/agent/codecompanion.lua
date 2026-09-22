@@ -31,14 +31,14 @@ return {
         background = {
           adapter = {
             name = "local_landev",
-            model = "local/google/gemma-4-31B-it",
+            model = "local/Qwen/Qwen3.8-27B-FP8",
           },
           gates = {
             judge = {
               enabled = true,
               adapter = {
                 name = "local_landev",
-                model = "local/google/gemma-4-31B-it",
+                model = "local/Qwen/Qwen3.8-27B-FP8",
               },
             },
           },
@@ -46,7 +46,7 @@ return {
         chat = {
           adapter = {
             name = "local_landev",
-            model = "local/google/gemma-4-31B-it",
+            model = "local/Qwen/Qwen3.8-27B-FP8",
           },
           tools = {
             ["delete_file"] = {
@@ -69,13 +69,13 @@ return {
         inline = {
           adapter = {
             name = "local_landev",
-            model = "local/google/gemma-4-31B-it",
+            model = "local/Qwen/Qwen3.8-27B-FP8",
           },
         },
         cmd = {
           adapter = {
             name = "local_landev",
-            model = "local/google/gemma-4-31B-it",
+            model = "local/Qwen/Qwen3.8-27B-FP8",
           },
         },
       },
