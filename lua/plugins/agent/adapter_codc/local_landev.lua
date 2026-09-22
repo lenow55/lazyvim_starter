@@ -29,7 +29,7 @@ return {
                 mapping = "parameters",
                 type = "enum",
                 desc = "ID of the model to use. See the model endpoint compatibility table for details on which models work with the Chat API.",
-                default = "local/google/gemma-4-31B-it",
+                default = "local/Qwen/Qwen3.8-27B-FP8",
                 choices = {
                   ["local/google/gemma-4-31B-it"] = {
                     formatted_name = "Gemma-4-31B",
