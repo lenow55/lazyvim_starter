@@ -16,7 +16,7 @@ return {
           opts = {
             collapse_tools = true,
             individual_tools = { "subagent_*", "read_file" },
-            deny_groups = { "agent*", "mcp" },
+            deny_groups = { "agent", "mcp" },
             no_approval_for = {
               "git",
               "github",
