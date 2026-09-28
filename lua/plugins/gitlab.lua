@@ -1,4 +1,4 @@
-if true then
+if vim.g.lazyvim_gitlab_ci ~= true then
   return {}
 end
 
