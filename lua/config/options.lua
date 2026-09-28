@@ -10,3 +10,9 @@ vim.g.lazyvim_python_lsp = "basedpyright"
 vim.env["GEMINI_API_KEY"] = "***"
 vim.env["LANDEV_API_KEY"] = "***"
 vim.env["DKS_API_KEY"] = "***"
+
+-- Включить CodeCompanion (раскомментируйте, чтобы включить).
+-- vim.g.lazyvim_codecompanion = true
+
+-- vim.g.lazyvim_gitlab_ci = true
+-- vim.g.lazyvim_latex_inline = true

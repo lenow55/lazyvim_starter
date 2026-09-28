@@ -1,4 +1,4 @@
-if true then
+if vim.g.lazyvim_codecompanion ~= true then
   return {}
 end
 
