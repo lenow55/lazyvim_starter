@@ -1,4 +1,4 @@
-if true then
+if vim.g.lazyvim_latex_inline ~= true then
   return {}
 end
 

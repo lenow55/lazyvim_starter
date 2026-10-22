@@ -3,7 +3,7 @@ return {
     "nvim-neotest/neotest",
     dependencies = {
       "nvim-neotest/neotest-python",
-      "alfaix/neotest-gtest",
+      -- "alfaix/neotest-gtest",
     },
     ---@class neotest.CoreConfig
     opts = {
@@ -15,7 +15,7 @@ return {
             return require("venv-selector").python()
           end,
         },
-        ["neotest-gtest"] = { setup = {} },
+        -- ["neotest-gtest"] = { setup = {} },
       },
     },
   },
