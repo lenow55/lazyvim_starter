@@ -1,6 +1,6 @@
 ---
 name: comparing-docs-across-tags
-description: Use when comparing documentation or configuration settings between two versions (git tags) of a project, when the docs site shows only the latest version with no version switcher, or when the user needs what changed between releases and migration steps for their config
+description: "Use when comparing documentation or configuration settings between two versions (git tags) of a project, when the docs site shows only the latest version with no version switcher, or when the user needs what changed between releases and migration steps for their config"
 ---
 
 # Сравнение документации между версиями
@@ -18,8 +18,8 @@ description: Use when comparing documentation or configuration settings between 
 - «Как поменялись настройки X между версией A и B?»
 - На сайте доков нет переключателя версий, а нужна старая версия
 - Нужна миграция user-конфига на новую версию
-Не использовать: для сравнения исходного кода (не документации), для
-изменений внутри одной версии.
+  Не использовать: для сравнения исходного кода (не документации), для
+  изменений внутри одной версии.
 
 ## Core Pattern
 
@@ -28,7 +28,7 @@ description: Use when comparing documentation or configuration settings between 
    Работать ТОЛЬКО с репо, где есть теги. Доки могут жить в основном
    репо (`docs/`) или в отдельном доки-репо — проверить оба.
 3. **Найти файлы**: code search `repo:owner/name <термин> extension:md`
-   + дерево `docs/` на нужном рефе.
+   - дерево `docs/` на нужном рефе.
 4. **Триангуляция — обязательно**: выбрать 2–3 связанных файла
    (страница конфигурации + страница концепции + CLI-страница).
    Для КАЖДОГО файла проверить существование пути в обоих тегах:
@@ -49,24 +49,24 @@ description: Use when comparing documentation or configuration settings between 
 
 ## Quick Reference
 
-| Действие | Инструмент |
-|---|---|
-| Страницы актуальных доков | web_search / tavily |
-| Теги репозитория | `github__list_tags` |
-| Поиск файлов по термину | `github__search_code` (`repo:owner/name term extension:md`) |
-| Дерево/файл на конкретном теге | `github__get_file_contents` c `ref=refs/tags/<tag>` |
-| Содержимое без API | raw.githubusercontent.com/owner/repo/<tag>/path |
-| Diff файла с одинаковым путём | GitHub `/compare/tagA...tagB` |
+| Действие                       | Инструмент                                                  |
+| ------------------------------ | ----------------------------------------------------------- |
+| Страницы актуальных доков      | web_search / tavily                                         |
+| Теги репозитория               | `github__list_tags`                                         |
+| Поиск файлов по термину        | `github__search_code` (`repo:owner/name term extension:md`) |
+| Дерево/файл на конкретном теге | `github__get_file_contents` c `ref=refs/tags/<tag>`         |
+| Содержимое без API             | raw.githubusercontent.com/owner/repo/<tag>/path             |
+| Diff файла с одинаковым путём  | GitHub `/compare/tagA...tagB`                               |
 
 ## Common Mistakes (из baseline-тестов)
 
-| Ошибка | Последствие |
-|---|---|
-| Сравнить один первый файл | Пропущены изменения, задокументированные на других страницах (тот же путь в обоих тегах — сравнить обязательно) |
-| Не проверить существование пути в обоих тегах | Raw diff бессмысленен: «удалено + добавлено» вместо сравнения |
-| Доки-репо без тегов как источник | Невозможно взять версию — проверять `list_tags` до поиска файлов |
-| Строковой diff вместо семантического | Пользователю нужно «что сделать с конфигом», а не «какие строки поменялись» |
-| Не сверять утверждения с примерами | Промахи в migration guide (пример содержит retired-поле) |
+| Ошибка                                        | Последствие                                                                                                     |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Сравнить один первый файл                     | Пропущены изменения, задокументированные на других страницах (тот же путь в обоих тегах — сравнить обязательно) |
+| Не проверить существование пути в обоих тегах | Raw diff бессмысленен: «удалено + добавлено» вместо сравнения                                                   |
+| Доки-репо без тегов как источник              | Невозможно взять версию — проверять `list_tags` до поиска файлов                                                |
+| Строковой diff вместо семантического          | Пользователю нужно «что сделать с конфигом», а не «какие строки поменялись»                                     |
+| Не сверять утверждения с примерами            | Промахи в migration guide (пример содержит retired-поле)                                                        |
 
 ## Red Flags — остановиться
 
