@@ -10,13 +10,8 @@ return {
         subagents = {
           enabled = true,
           opts = {
+            async_delivery = true,
             powers = {
-              xhigh = {
-                adapter = { name = "dks_ultra", model = "DeepSeek-V4.1-Flash" },
-              },
-              high = {
-                adapter = { name = "dks_ultra", model = "GLM-5.3-Flash" },
-              },
               medium = {
                 adapter = { name = "local_landev", model = "local/Qwen/Qwen3.8-27B-FP8" },
               },
@@ -94,7 +89,7 @@ Your workflow:
       },
     },
     dependencies = {
-      "cairijun/codecompanion-subagents.nvim",
+      "lenow55/codecompanion-subagents.nvim",
     },
   },
 }
