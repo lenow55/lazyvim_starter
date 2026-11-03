@@ -9,5 +9,5 @@ data
 lua/config/options.lua
 lazyvim.json
 lazy-lock.json
-overrides/*
-!overrides/*.lua.tpl
+lua/overrides/**
+!lua/overrides/*.lua.tpl
