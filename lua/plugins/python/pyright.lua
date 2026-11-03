@@ -1,7 +1,3 @@
-if vim.g.lazyvim_python_lsp ~= "basedpyright" then
-  return {}
-end
-
 return {
   {
     "neovim/nvim-lspconfig",
@@ -60,7 +56,7 @@ return {
               workDoneProgress = true,
             }
           end,
-          enabled = true,
+          enabled = vim.g.lazyvim_python_lsp == "basedpyright",
         },
       },
     },

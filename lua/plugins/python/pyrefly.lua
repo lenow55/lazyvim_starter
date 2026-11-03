@@ -1,7 +1,3 @@
-if vim.g.lazyvim_python_lsp ~= "pyrefly" then
-  return {}
-end
-
 return {
   {
     "neovim/nvim-lspconfig",
@@ -27,7 +23,7 @@ return {
               },
             },
           },
-          enabled = true,
+          enabled = vim.g.lazyvim_python_lsp == "pyrefly",
         },
       },
     },

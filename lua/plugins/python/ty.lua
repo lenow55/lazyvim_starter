@@ -1,7 +1,3 @@
-if vim.g.lazyvim_python_lsp ~= "ty" then
-  return {}
-end
-
 return {
   "neovim/nvim-lspconfig",
   ---@class PluginLspOpts
@@ -34,7 +30,7 @@ return {
           -- c workspace диагностикой не работает в neovim, так как
           -- он не поддерживает стримминг диагностики
         },
-        enabled = true,
+        enabled = vim.g.lazyvim_python_lsp == "ty",
       },
     },
   },
