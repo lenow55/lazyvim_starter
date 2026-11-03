@@ -12,10 +12,10 @@ vim.env["LANDEV_API_KEY"] = "***"
 vim.env["DKS_API_KEY"] = "***"
 
 
-# пример для работы с кастомным окружением питона в винде
+--- пример для работы с кастомным окружением питона в винде
 vim.g.python3_host_prog = "C:\\Users\\IANovikov\\.conda\\envs\\nvim-env\\python.exe"
 
-# настройка для utf8-pwsh
+--- настройка для utf8-pwsh
 local powershell_options = {
   shell = vim.fn.executable("pwsh") == 1 and "pwsh" or "powershell",
   shellcmdflag = "-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;",
