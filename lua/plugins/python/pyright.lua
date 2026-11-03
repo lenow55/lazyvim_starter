@@ -1,4 +1,4 @@
-if vim.g.lazyvim_python_lsp == "basedpyright" then
+if vim.g.lazyvim_python_lsp ~= "basedpyright" then
   return {}
 end
 

@@ -1,4 +1,4 @@
-if vim.g.lazyvim_python_lsp == "pyrefly" then
+if vim.g.lazyvim_python_lsp ~= "pyrefly" then
   return {}
 end
 

@@ -1,4 +1,4 @@
-if vim.g.lazyvim_python_lsp == "ty" then
+if vim.g.lazyvim_python_lsp ~= "ty" then
   return {}
 end
 
