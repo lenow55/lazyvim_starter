@@ -11,6 +11,24 @@ vim.env["GEMINI_API_KEY"] = "***"
 vim.env["LANDEV_API_KEY"] = "***"
 vim.env["DKS_API_KEY"] = "***"
 
+
+# пример для работы с кастомным окружением питона в винде
+vim.g.python3_host_prog = "C:\\Users\\IANovikov\\.conda\\envs\\nvim-env\\python.exe"
+
+# настройка для utf8-pwsh
+local powershell_options = {
+  shell = vim.fn.executable("pwsh") == 1 and "pwsh" or "powershell",
+  shellcmdflag = "-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;",
+  shellredir = "-RedirectStandardOutput %s -NoNewWindow -Wait",
+  shellpipe = "2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode",
+  shellquote = "",
+  shellxquote = "",
+}
+
+for option, value in pairs(powershell_options) do
+  vim.opt[option] = value
+end
+
 -- Включить CodeCompanion (раскомментируйте, чтобы включить).
 -- vim.g.lazyvim_codecompanion = true
 
