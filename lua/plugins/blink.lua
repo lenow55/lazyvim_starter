@@ -9,7 +9,6 @@ return {
       },
       fuzzy = {
         implementation = "prefer_rust_with_warning",
-        -- prebuilt_binaries = { force_version = "v0.14.0" },
       },
     },
   },

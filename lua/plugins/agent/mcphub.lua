@@ -4,7 +4,7 @@ end
 
 return {
   {
-    "bahaaza/mcphub.nvim",
+    "lenow55/mcphub.nvim",
     dependencies = {
       "nvim-lua/plenary.nvim",
     },
@@ -17,6 +17,7 @@ return {
       },
       use_bundled_binary = true, -- Use local `mcp-hub` binary
       mcp_request_timeout = 300000,
+      config = vim.fn.expand("~/.config/mcphub/servers.json"),
       builtin_tools = {
         edit_file = {
           ui = {

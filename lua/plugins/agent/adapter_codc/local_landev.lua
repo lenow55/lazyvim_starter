@@ -3,8 +3,7 @@ if vim.g.lazyvim_codecompanion ~= true then
 end
 
 local cc_utils = require("utils.codecompanion")
-local landev_url = "https://dev02-lb.gpt.dks.lanit.ru/v1/chat/completions"
--- local landev_url = "http://litellm.dev02.svc.cluster.local:4000/v1/chat/completions"
+local landev_url = "https://dev02-lb.gpt.dks.lanit.ru/v1/responses"
 
 return {
   {
@@ -102,7 +101,7 @@ return {
               },
               ["metadata.trace_user_id"] = cc_utils.metadata_uid,
             }, cc_utils.common_schema)
-            cc_utils.apply_reasoning_sysmerge_handler(adapter)
+            adapter.handlers.response.parse_chat = cc_utils.parse_chat
             cc_utils.apply_session_handler(adapter)
             return adapter
           end,

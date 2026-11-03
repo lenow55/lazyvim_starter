@@ -49,15 +49,36 @@ return {
             model = "local/Qwen/Qwen3.8-27B-FP8",
           },
           tools = {
+            -- groups = {
+            --   ["autoAgent"] = {
+            --     description = "Agent - Can run code, edit code and modify files on your behalf",
+            --     system_prompt = function(group, ctx)
+            --       return string.format("")
+            --     end,
+            --     tools = {
+            --       "ask_questions",
+            --       "agent_skills",
+            --       "auto_tools",
+            --     },
+            --     opts = {
+            --       collapse_tools = true,
+            --       ignore_system_prompt = true,
+            --       ignore_tool_system_prompt = true,
+            --     },
+            --   },
+            -- },
             ["delete_file"] = {
               opts = {
-                judge_in_yolo_mode = true,
+                judge = true,
               },
             },
             ["run_command"] = {
               opts = {
-                judge_in_yolo_mode = true,
+                judge = true,
               },
+            },
+            ["ask_questions"] = {
+              visible = true,
             },
             opts = {
               system_prompt = {

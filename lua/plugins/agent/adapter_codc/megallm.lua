@@ -3,7 +3,7 @@ if vim.g.lazyvim_codecompanion ~= true then
 end
 
 local cc_utils = require("utils.codecompanion")
-local megallm_url = "http://megallm:8777/v1/chat/completions"
+local megallm_url = "http://megallm:8777/v1/responses"
 
 return {
   {
@@ -96,7 +96,7 @@ return {
               },
               ["metadata.trace_user_id"] = cc_utils.metadata_uid,
             }, cc_utils.common_schema)
-            cc_utils.apply_reasoning_sysmerge_handler(adapter)
+            adapter.handlers.response.parse_chat = cc_utils.parse_chat
             cc_utils.apply_session_handler(adapter)
             return adapter
           end,

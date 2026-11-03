@@ -13,7 +13,7 @@ return {
       adapters = {
         http = {
           dks_ultra = function()
-            local adapter = require("codecompanion.adapters.http").resolve("openai", {})
+            local adapter = require("codecompanion.adapters.http").resolve("openai_legacy", {})
             adapter.url = dks_url
             adapter.env = {
               api_key = "DKS_API_KEY",

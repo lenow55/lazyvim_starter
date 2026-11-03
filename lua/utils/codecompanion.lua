@@ -3,10 +3,10 @@
 -- в lua/plugins/ как spec (модуль обязан возвращать список спеков плагинов).
 local M = {}
 
----@param data table Данные сообщения от HTTP-адаптера
+---@param args table Данные сообщения от HTTP-адаптера
 ---@return table
-function M.parse_reasoning(data)
-  local extra = data.extra
+function M.parse_meta(args)
+  local extra = args.data and args.data.extra
   if extra and extra.reasoning_content and extra.reasoning_content ~= "" then
     data.output.reasoning = data.output.reasoning or {}
     data.output.reasoning.content = extra.reasoning_content
@@ -21,6 +21,194 @@ function M.parse_reasoning(data)
   return data
 end
 
+---@param self CodeCompanion.HTTPAdapter
+---@param args { data: string|table, tools?: table }
+---@return table|nil [status: string, output: table]
+function M.parse_chat(self, args)
+  local adapter_utils = require("codecompanion.adapters.utils")
+  local data = args.data
+  local tools = args.tools
+  if not data or data == "" then
+    return nil
+  end
+
+  -- Handle both streamed data and structured response
+  local data_mod = type(data) == "table" and data.body or adapter_utils.clean_streamed_data(data)
+  local ok, json = pcall(vim.json.decode, data_mod, { luanil = { object = true } })
+  if not ok then
+    return nil
+  end
+
+  -- Handle non-streamed response
+  if not self.opts.stream then
+    -- Reasoning
+    local reasoning = {}
+    if json.output then
+      for _, item in ipairs(json.output) do
+        if item.type == "reasoning" then
+          reasoning.id = item.id
+          reasoning.encrypted_content = item.encrypted_content
+          for _, block in ipairs(item.summary) do
+            if block.type == "summary_text" then
+              reasoning.content = reasoning.content and (reasoning.content .. "\n\n" .. block.text) or block.text
+            end
+          end
+        end
+      end
+    end
+
+    -- Tools
+    if json.output and tools then
+      local index = 1
+      vim
+        .iter(json.output)
+        :filter(function(item)
+          return item.type == "function_call"
+        end)
+        :each(function(tool)
+          table.insert(tools, {
+            _index = index,
+            id = tool.id,
+            call_id = tool.call_id,
+            type = "function",
+            ["function"] = {
+              name = tool.name,
+              arguments = tool.arguments or "",
+            },
+          })
+          index = index + 1
+        end)
+    end
+
+    -- Compaction: only keep the latest item
+    local compaction = nil
+    if json.output then
+      for _, item in ipairs(json.output) do
+        if item.type == "compaction" then
+          compaction = item
+        end
+      end
+    end
+
+    local content = nil
+    if json.output then
+      for _, item in ipairs(json.output) do
+        if item.type == "message" and item.content then
+          for _, block in ipairs(item.content) do
+            if block.type == "output_text" then
+              content = (content or "") .. block.text
+            end
+          end
+        end
+      end
+    end
+
+    return {
+      status = "success",
+      output = {
+        content = content,
+        meta = {
+          compaction = compaction,
+          response_id = json.id,
+        },
+        reasoning = reasoning,
+        role = self.roles.llm,
+      },
+    }
+  end
+
+  if json.type == "response.created" then
+    response_id = json.response.id
+  end
+
+  local output = {}
+  if json.type == "response.reasoning_summary_text.delta" then
+    output = {
+      role = self.roles.llm,
+      reasoning = { content = json.delta or "" },
+      meta = { response_id = response_id },
+    }
+  elseif json.type == "response.reasoning_text.delta" then
+    output = {
+      role = self.roles.llm,
+      reasoning = { content = json.delta or "" },
+      meta = { response_id = response_id },
+    }
+  elseif json.type == "response.output_text.delta" then
+    output = {
+      role = self.roles.llm,
+      content = json.delta or "",
+      meta = { response_id = response_id },
+    }
+  elseif json.type == "response.output_item.added" and json.item and json.item.type == "compaction" then
+    output = {
+      meta = {
+        compaction = json.item,
+        response_id = response_id,
+      },
+      role = self.roles.llm,
+    }
+  elseif json.type == "response.completed" then
+    if json.response and json.response.output then
+      local reasoning = {}
+      vim
+        .iter(json.response.output)
+        :filter(function(reasoning_output)
+          return reasoning_output.type == "reasoning"
+        end)
+        :each(function(reasoning_output)
+          reasoning.id = reasoning_output.id
+          reasoning.encrypted_content = reasoning_output.encrypted_content
+        end)
+
+      vim
+        .iter(json.response.output)
+        :filter(function(item)
+          return item.type == "function_call" and item.status == "completed"
+        end)
+        :each(function(tool)
+          if tools then
+            table.insert(tools, {
+              id = tool.id,
+              call_id = tool.call_id,
+              type = "function",
+              ["function"] = {
+                name = tool.name,
+                arguments = tool.arguments or "",
+              },
+            })
+          end
+        end)
+
+      -- Compaction: only keep the latest item
+      local compaction = nil
+      for _, item in ipairs(json.response.output) do
+        if item.type == "compaction" then
+          compaction = item
+        end
+      end
+
+      output = {
+        meta = {
+          compaction = compaction,
+          response_id = response_id,
+        },
+        reasoning = reasoning,
+        role = self.roles.llm,
+      }
+    end
+  end
+
+  if vim.tbl_count(output) == 0 then
+    return nil
+  end
+
+  return {
+    status = "success",
+    output = output,
+  }
+end
+
 ---Навешивает на openai-адаптер общие обёртки:
 ---* merge system-сообщений в form_messages
 ---* парсинг reasoning в parse_message_meta
@@ -28,13 +216,13 @@ end
 function M.apply_reasoning_sysmerge_handler(adapter)
   -- ленивый require: на момент загрузки спеков сам codecompanion.nvim ещё не загружен
   local adapter_utils = require("codecompanion.adapters.utils")
-  local original_form_messages = adapter.handlers.form_messages
+  -- local original_form_messages = adapter.handlers.form_messages
   adapter.handlers.form_messages = function(self, messages)
     messages = adapter_utils.merge_system_messages(messages)
     return original_form_messages(self, messages)
   end
-  adapter.handlers.parse_message_meta = function(self, data)
-    return M.parse_reasoning(data)
+  adapter.handlers.parse_meta = function(self, args)
+    return M.parse_reasoning(args)
   end
 end
 
