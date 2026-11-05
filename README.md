@@ -6,11 +6,11 @@ Refer to the [documentation](https://lazyvim.github.io/installation) to get star
 ## win
 
 ```powershell
-git clone https://github.com/LazyVim/starter $env:LOCALAPPDATA\nvim
+git clone https://github.com/lenow55/lazyvim_starter $env:LOCALAPPDATA\nvim
 ```
 
 ## linux
 
 ```bash
-git clone https://github.com/LazyVim/starter ~/.config/nvim
+git clone https://github.com/lenow55/lazyvim_starter ~/.config/nvim
 ```
